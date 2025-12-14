@@ -1,4 +1,5 @@
 ⚙️ Tech Stack
+
 React is a popular open‑source JavaScript library for building user interfaces using reusable components and a virtual DOM, enabling efficient, dynamic single-page and native apps.
 
 React Router v7 is the go‑to routing library for React apps, offering nested routes, data loaders/actions, error boundaries, code splitting, and SSR support—all with a smooth upgrade path from v6.
@@ -16,6 +17,7 @@ Vite is a fast build tool and dev server using native ES modules for instant sta
 Zustand is a minimal, hook-based state management library for React. It lets you manage global state with zero boilerplate, no context providers, and excellent performance through selective state subscriptions.
 
 🔋 Features
+
 👉 Easy & convenient auth: Handle authentication entirely in the browser using Puter.js—no backend or setup required.
 
 👉 Resume upload & storage: Let users upload and store all their resumes in one place, safely and reliably.
