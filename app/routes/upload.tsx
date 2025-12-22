@@ -1,6 +1,11 @@
-import {useState, type FormEvent} from "react";
-import FileUploader from "~/components/FileUploader";
+import {type FormEvent, useState} from 'react'
 import Navbar from "~/components/Navbar";
+import FileUploader from "~/components/FileUploader";
+import {usePuterStore} from "~/lib/puter";
+import {useNavigate} from "react-router";
+import { convertPdfToImage } from '~/lib/pdf2img';
+
+
 const Upload = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
@@ -8,9 +13,17 @@ const Upload = () => {
     const handleFileSelect = (file: File | null) => {
         setFile(file)
     }
+    const {auth, isLoading, ai, kv, fs} = usePuterStore();
+    const navigate = useNavigate ();
     const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
     setIsProcessing(true);
     setStatusText('Uploading the file...')   
+    const uploadedFile = await fs.upload([file]);
+
+    if(!uploadedFile) return setStatusText('Error: Failed to upload file');
+
+    setStatusText('Converting to image...');
+    const imageFile = await convertPdfToImage(file);
     
     }
      const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
