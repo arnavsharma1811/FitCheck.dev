@@ -8,6 +8,11 @@ const Upload = () => {
     const handleFileSelect = (file: File | null) => {
         setFile(file)
     }
+    const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
+    setIsProcessing(true);
+    setStatusText('Uploading the file...')   
+    
+    }
      const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const form = e.currentTarget.closest('form');
@@ -19,7 +24,7 @@ const Upload = () => {
         const jobDescription = formData.get('job-description') as string;
 
         if(!file) return;
-
+        handleAnalyze({companyName, jobTitle, jobDescription, file});
        
     }
     return (
