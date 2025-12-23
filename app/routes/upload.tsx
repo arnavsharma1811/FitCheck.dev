@@ -4,6 +4,8 @@ import FileUploader from "~/components/FileUploader";
 import {usePuterStore} from "~/lib/puter";
 import {useNavigate} from "react-router";
 import { convertPdfToImage } from '~/lib/pdf2img';
+import { generateUUID } from '~/lib/utils';
+import { prepareInstructions } from '~/constants';
 
 
 const Upload = () => {
@@ -24,7 +26,41 @@ const Upload = () => {
 
     setStatusText('Converting to image...');
     const imageFile = await convertPdfToImage(file);
+    if(!imageFile) return setStatusText('Failed to convert');
+
+    setStatusText('Uploading the image...');
+    if(!imageFile.file) return setStatusText('Error: Image file is null');
+    const uploadedImage = await fs.upload([imageFile.file]);
+    if(!uploadedImage) return setStatusText('Error: Failed to uploadd image');
+
+    setStatusText('Preparing data...')
+
+    const uuid = generateUUID();
+    const data = {
+      id: uuid,
+      resumePath: uploadedFile.path,
+      imagePath: uploadedImage.path,
+      companyName, jobTitle, jobDescription,
+      feedback: '',
+    }
+     await kv.set(`resume:${uuid}`, JSON.stringify(data));
+     setStatusText('Analyzing the data...')
+    const feedback = await ai.feedback(
+            uploadedFile.path,
+            prepareInstructions({ jobTitle, jobDescription })
+        )
+        if (!feedback) return setStatusText('Error: Failed to analyze resume');
+    const feedbackText = typeof feedback.message.content === 'string' ?
+    feedback.message.content 
+    : feedback.message.content[0].text;
+
+    data.feedback = JSON.parse(feedbackText);
+    await kv.set(`resume: ${uuid}`, JSON.stringify(data));
+    setStatusText('Analysis complete, redirecting..');
+    console.log(data);
+    navigate('/resume/${uuid}')
     
+
     }
      const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,7 +77,7 @@ const Upload = () => {
        
     }
     return (
-       <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+       <main className="bg-[url('/images/up5.jpeg')] bg-cover">
         <Navbar />
         <section className="main-section">
             <div className="page-heading">

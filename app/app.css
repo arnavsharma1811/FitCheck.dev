@@ -39,9 +39,7 @@ h2 {
   @apply max-sm:text-xl text-3xl text-gray-200;
 }
 
-label {
-  @apply text-dark-200;
-}
+
 input {
   @apply w-full p-4 inset-shadow rounded-2xl focus:outline-none bg-white;
 }
@@ -121,8 +119,13 @@ form {
   }
 
   .form-div {
-    @apply flex flex-col gap-2 w-full items-start;
-  }
+  @apply flex flex-col gap-2 w-full items-start;
+}
+
+.form-div label {
+  @apply text-base font-bold text-black ;
+}
+
 
   .uplader-drag-area {
     @apply relative p-8 text-center transition-all duration-700 cursor-pointer bg-white rounded-2xl min-h-[208px];
