@@ -1,14 +1,25 @@
 import {type FormEvent, useState} from 'react'
 import Navbar from "~/components/Navbar";
 import FileUploader from "~/components/FileUploader";
+import type { Route } from "./+types/home";
 import {usePuterStore} from "~/lib/puter";
 import {useNavigate} from "react-router";
 import { convertPdfToImage } from '~/lib/pdf2img';
 import { generateUUID } from '~/lib/utils';
 import { prepareInstructions } from '~/constants';
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "FitCheck.dev | Upload your resume" },
+    { name: "description", content: "Upload your resume with the job details to get feedback" },
+  ];
+}
+
 
 const Upload = () => {
+
+
+  
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [file, setFile] = useState<File|null> (null);
@@ -78,8 +89,8 @@ const Upload = () => {
     }
     return (
        <main className="bg-[url('/images/up5.jpeg')] bg-cover">
-        <Navbar />
-        <section className="main-section">
+        
+        <section className="main-section pt-1">
             <div className="page-heading">
                 <h1>Smart feedback for your dream job</h1>
                 {isProcessing ? (
