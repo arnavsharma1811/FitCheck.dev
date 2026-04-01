@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitCheck.dev Code Review</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #111;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.8em;
+            color: #222;
+            margin-top: 40px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 1.3em;
+            color: #444;
+            margin-top: 25px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 0.9em;
+            color: #212529;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-left: 4px solid #ffecb5;
+            margin: 15px 0;
+        }
+        .good {
+            background-color: #d4edda;
+            padding: 10px;
+            border-left: 4px solid #c3e6cb;
+            margin: 15px 0;
+        }
+        .bad {
+            background-color: #f8d7da;
+            padding: 10px;
+            border-left: 4px solid #f5c6cb;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>FitCheck.dev: Code Review for Students</h1>
+
+<p>Hi! Since you are in your 4th semester of B.Tech, you're exactly at the stage where you're transitioning from "writing code that works" to "writing code that is robust and maintainable."</p>
+
+<p>This review is written just for you. We will go over your FitCheck.dev project (an AI Resume Analyzer). I've focused on explaining <em>why</em> certain things are good, and <em>why</em> certain things can cause problems down the line, without using confusing jargon.</p>
+
+---
+
+<h2>1. The Big Picture (Architecture)</h2>
+
+<p>Your app is built using <strong>React Router v7</strong> for the frontend and routing, and <strong>Puter.js</strong> for the backend (database, file storage, AI, and authentication).</p>
+
+<div class="good">
+    <strong>What's really good here:</strong>
+    Using a Backend-as-a-Service (BaaS) like Puter is a very smart move for a solo developer or student. Instead of spending weeks building a custom Node.js backend with MongoDB, AWS S3, and JWT authentication, you used a tool that handles all of that for you. This allows you to focus on the core logic: the AI resume analysis. 
+</div>
+
+<h3>A Small Note on Server-Side Rendering (SSR)</h3>
+<p>In your <code>react-router.config.ts</code>, you have <code>ssr: true</code>. This means your app needs a Node.js server to run. However, since all your data comes from Puter.js (which only runs in the browser), the server isn't actually doing much. It sends a blank HTML shell, and then the browser does all the work anyway.</p>
+<p><strong>Senior Tip:</strong> In the future, for apps entirely dependent on browser scripts like Puter, you could set <code>ssr: false</code>. This makes your app a "Single Page Application" (SPA), which is easier and cheaper to host (you can host it on GitHub Pages, Vercel, or Netlify for free as static files).</p>
+
+
+<h2>2. How You Manage State (Zustand)</h2>
+
+<p>You used <strong>Zustand</strong> (in <code>app/lib/puter.ts</code>) to connect Puter.js to your React app. </p>
+
+<div class="good">
+    <strong>Awesome Pattern:</strong>
+    By creating a hook like <code>usePuterStore</code>, you made it so your React components don't have to talk to Puter directly. They just ask your store for the data. If Puter ever changes how their code works, you only have to update <code>puter.ts</code>, not your entire app!
+</div>
+
+<div class="bad">
+    <strong>What to improve (Code Repetition):</strong>
+    Look at the <code>setError</code> function:
+<pre><code>const setError = (msg: string) => {
+    set({
+        error: msg,
+        auth: {
+            user: null,
+            isAuthenticated: false,
+            signIn: get().auth.signIn,
+            signOut: get().auth.signOut,
+            // ... lots of lines
+        }
+    });
+};</code></pre>
+    You are rewriting all the functions (like <code>signIn</code>) every time you update the state.
+    <br><br>
+    <strong>The Fix:</strong> Keep your state "flat". Instead of grouping things inside <code>auth: { ... }</code>, put them right at the top level of your store. Then you can just write <code>set({ error: msg, user: null })</code> and you won't have to re-type the functions over and over.
+</div>
+
+
+<h2>3. Important Bugs to Fix (Learn from these!)</h2>
+
+<p>These are real issues that could break the app for your users. Senior engineers always look out for edge cases like these.</p>
+
+<h3>Bug A: "Infinite Loading" on Errors</h3>
+<p><strong>Where:</strong> <code>app/routes/upload.tsx</code> inside <code>handleAnalyze</code></p>
+<p><strong>The problem:</strong> When an upload starts, you run <code>setIsProcessing(true)</code> to show a loading GIF.<br>
+If something goes wrong (e.g., the file upload fails), you do this: <code>if(!uploadedFile) return setStatusText('Error...');</code></p>
+<p>Because you used <code>return</code>, the function stops. But you <em>never</em> set <code>setIsProcessing(false)</code>. The loading GIF will spin forever, and the user has to refresh the page to try again.</p>
+<p><strong>The fix:</strong> Always turn off your loading state before returning an error!</p>
+
+<h3>Bug B: "Memory Leaks" with Blob URLs</h3>
+<p><strong>Where:</strong> <code>app/routes/resume.tsx</code></p>
+<p><strong>The problem:</strong> You are converting files into URLs so you can show images:
+<code>const resumeUrl = URL.createObjectURL(pdfBlob);</code><br>
+This correctly tells the browser to keep that image in its memory. However, when the user leaves the page, you never tell the browser to delete it. If they open 10 resumes, all 10 stay stuck in memory, slowing down their computer.</p>
+<p><strong>The fix:</strong> Use React's cleanup function in <code>useEffect</code>: <code>URL.revokeObjectURL(resumeUrl)</code>.</p>
+
+<h3>Bug C: Assuming the AI will always be perfect</h3>
+<p><strong>Where:</strong> <code>app/routes/upload.tsx</code></p>
+<p><strong>The problem:</strong> You ask the AI to return JSON. You then take whatever the AI returns and do: <code>JSON.parse(feedbackText)</code>.<br>
+AI is unpredictable. Sometimes Claude might say <em>"Here is your JSON: { ... }"</em>. If it adds those extra words, <code>JSON.parse</code> will crash your whole app instantly.</p>
+<p><strong>The fix:</strong> Put it inside a <code>try / catch</code> block. If it crashes, tell the user gracefully ("Sorry, the AI gave an invalid response, please try again").</p>
+
+<h3>Bug D: Open Redirect Vulnerability</h3>
+<p><strong>Where:</strong> <code>app/routes/auth.tsx</code></p>
+<p><strong>The problem:</strong> You take the <code>next</code> parameter from the URL and redirect the user there: <code>navigate(next)</code>. If a hacker sends your user a link like <code>FitCheck.dev/auth?next=https://evil-website.com</code>, your app will automatically send them to a bad website after they log in.</p>
+<p><strong>The fix:</strong> Check if the link starts with a <code>/</code> before navigating. That guarantees it's a page on your own website.</p>
+
+
+<h2>4. Code Cleanup & UI Tweaks</h2>
+
+<ul>
+    <li>
+        <strong>Copy-pasting logic:</strong> In your <code>Details.tsx</code>, <code>ATS.tsx</code>, and <code>ScoreBadge.tsx</code>, you wrote the exact same logic over and over:
+        <code>score > 69 ? "green" : score > 49 ? "yellow" : "red"</code>.
+        <br>It's better to create a single function in <code>utils.ts</code> called <code>getScoreLevel(score)</code> and use it everywhere. That way, if you ever change the passing score to 75, you only change it in one file!
+    </li>
+    <li>
+        <strong>Dead Code:</strong> In <code>app/constants/index.ts</code>, there is an array of mock <code>resumes</code> that is never used anywhere in your app. In the real world, we delete code the moment we stop using it (that's what Git is for—you can always bring it back!).
+    </li>
+    <li>
+        <strong>The Button Background:</strong> In <code>app.css</code>, your primary button has the background: <code>url("/images/Screenshot 2025-12-22 105544.png")</code>. While it works visually, using an actual screenshot file for a UI component is a hack. You should define those colors using a CSS gradient instead.
+    </li>
+</ul>
+
+<h2>5. Final Thoughts</h2>
+
+<p>You should be very proud! Connecting an application to an AI backend, dealing with PDFs, and rendering complex UI dashboards is not easy, especially in your 4th semester.</p>
+
+<p>The code is mostly clean, your logic is easy to follow, and the UI looks great. The bugs listed above are exactly the kind of things that separate a junior developer from a mid-level one. Fixing them will make this project a fantastic piece for your portfolio.</p>
+
+<p><em>— Best of luck on the rest of your B.Tech!</em></p>
+
+</body>
+</html>
