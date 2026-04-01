@@ -19,7 +19,10 @@ export function meta({}: Route.MetaArgs) {
 const Upload = () => {
 
 
-  
+
+
+    const capitalizeFirst = (value: string) => 
+    value.charAt(0).toUpperCase() + value.slice(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [file, setFile] = useState<File|null> (null);
@@ -66,27 +69,24 @@ const Upload = () => {
     : feedback.message.content[0].text;
 
     data.feedback = JSON.parse(feedbackText);
-    await kv.set(`resume: ${uuid}`, JSON.stringify(data));
+    await kv.set(`resume:${uuid}`, JSON.stringify(data));
     setStatusText('Analysis complete, redirecting..');
     console.log(data);
-    navigate('/resume/${uuid}')
+    navigate(`/resume/${uuid}`)
     
 
     }
      const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const form = e.currentTarget.closest('form');
-        if(!form) return;
-        const formData = new FormData(form);
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
 
-        const companyName = formData.get('company-name') as string;
-        const jobTitle = formData.get('job-title') as string;
-        const jobDescription = formData.get('job-description') as string;
+    const companyName = formData.get('company-name') as string;
+    const jobTitle = formData.get('job-title') as string;
+    const jobDescription = formData.get('job-description') as string;
 
-        if(!file) return;
-        handleAnalyze({companyName, jobTitle, jobDescription, file});
-       
-    }
+    if(!file) return;
+    handleAnalyze({companyName, jobTitle, jobDescription, file});
+}
     return (
        <main className="bg-[url('/images/up5.jpeg')] bg-cover">
         
@@ -105,15 +105,15 @@ const Upload = () => {
                     <form id = "upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 mt-8">
                       <div className="form-div" >
                         <label htmlFor="company-name">Company Name</label>
-                        <input type= "text" name="company-name" placeholder="Enter the company name" id="company-name"/>
+                        <input type= "text" name="company-name" placeholder="Enter the company name" id="company-name" onChange={(e) => e.target.value = capitalizeFirst(e.target.value)}/>
                       </div>
                        <div className="form-div" >
                         <label htmlFor="job-title">Job Title</label>
-                        <input type= "text" name="job-title" placeholder="Enter the Job title" id="job-title"/>
+                        <input type= "text" name="job-title" placeholder="Enter the Job title" id="job-title" onChange={(e) => e.target.value = capitalizeFirst(e.target.value)}/>
                       </div>
                       <div className="form-div" >
                         <label htmlFor="job-description">Job Description</label>
-                        <textarea rows={5} name="job-description" placeholder="Job description" id="job-description"/>
+                        <textarea rows={5} name="job-description" placeholder="Job description" id="job-description" onChange={(e) => e.target.value = capitalizeFirst(e.target.value)}/>
                       </div>
                        <div className="form-div" >
                         <label htmlFor="uploader">Upload Resume</label>
