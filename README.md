@@ -262,5 +262,5 @@ MIT — free to use, fork, and build on.
 
 <div align="center">
   Built by <strong><a href="https://github.com/arnavsharma1811">Arnav Sharma</a></strong><br>
-  B.Tech Computer Science · Symbiosis Institute of Technology, Pune
+  B.Tech Computer Science · Barkatullah University Institute Of Technology, Bhopal
 </div>
